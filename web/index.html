@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ДокПоиск — вопросы по документам</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo">Д</div>
+      <div>
+        <div class="brand-name">ДокПоиск</div>
+        <div class="brand-sub">локально · без интернета</div>
+      </div>
+    </div>
+
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" multiple hidden>
+      <div class="dz-title">Перетащите документы сюда</div>
+      <div class="dz-sub">или нажмите, чтобы выбрать<br><span id="formats">PDF, DOCX, XLSX, PPTX, TXT…</span></div>
+    </label>
+
+    <div id="jobs" class="jobs"></div>
+
+    <div class="section-head">
+      <span>Документы <span id="docCount" class="muted"></span></span>
+      <button class="link" id="scanInbox" title="Проиндексировать всё из папки inbox">из папки inbox</button>
+    </div>
+    <div class="hint muted" id="scopeHint">Поиск по всем документам. Отметьте галочками, чтобы искать только в выбранных.</div>
+    <ul id="docs" class="docs"></ul>
+
+    <div class="status" id="status">Проверяю модели…</div>
+  </aside>
+
+  <main class="chat">
+    <header class="chat-head">
+      <button class="icon-btn mobile-only" id="toggleSidebar" aria-label="Документы">☰</button>
+      <div class="chat-title">Вопросы по документам</div>
+      <button class="link" id="clearChat">Новый диалог</button>
+    </header>
+
+    <div class="messages" id="messages">
+      <div class="empty" id="empty">
+        <h1>Спросите что-нибудь о ваших документах</h1>
+        <p class="muted">Ответ строится только по загруженным файлам, со ссылками на источники.</p>
+        <div class="examples">
+          <button class="example">Какие этапы работ предусмотрены договором?</button>
+          <button class="example">В каком суде рассматриваются споры по договору?</button>
+          <button class="example">Какой срок оплаты и размер неустойки?</button>
+        </div>
+      </div>
+    </div>
+
+    <form class="composer" id="composer">
+      <textarea id="question" rows="1" placeholder="Задайте вопрос… (Enter — отправить, Shift+Enter — новая строка)"></textarea>
+      <button type="submit" id="send" class="send">Спросить</button>
+    </form>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
