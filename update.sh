@@ -6,7 +6,10 @@ cd "$(dirname "$0")"
 
 if [[ -d .git ]]; then
   echo "==> Скачиваю обновления…"
-  git pull --ff-only
+  # fetch + reset вместо pull: срабатывает, даже если файлы программы случайно правили.
+  # Затрагивает только папку программы; документы и база лежат в ~/DocPoisk.
+  git fetch origin
+  git reset --hard origin/main
 else
   echo "Эта папка скачана ZIP-архивом, обновить её автоматически нельзя."
   echo "Скачайте новый ZIP с https://github.com/ilugly/docpoisk и запустите в новой папке: bash install.sh"

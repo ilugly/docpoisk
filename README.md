@@ -25,10 +25,10 @@ git clone https://github.com/ilugly/docpoisk.git ~/docpoisk
 cd ~/docpoisk && bash install.sh
 ```
 
-**Уже ставили раньше?** `git clone` повторять не нужно, просто обновите:
+**Уже ставили раньше?** `git clone` повторять не нужно. Обновление для любой версии, включая первую:
 
 ```bash
-cd ~/docpoisk && bash update.sh
+cd ~/docpoisk && git fetch origin && git reset --hard origin/main && bash install.sh
 ```
 
 Документы, база и настройки при обновлении сохраняются.
