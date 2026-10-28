@@ -144,9 +144,12 @@ function addMessage(role, html, cls = "") {
 }
 const scrollDown = () => { const m = $("#messages"); m.scrollTop = m.scrollHeight; };
 
-function renderAnswer(text) {
-  return esc(text).replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g, (_, nums) =>
-    nums.split(/\s*,\s*/).map((n) => `<span class="cite" data-n="${n}">${n}</span>`).join(" "));
+// [1], [2, 3] → кликабельные ссылки; номера несуществующих фрагментов (модель иногда ошибается) убираем
+function renderAnswer(text, nSources) {
+  return esc(text).replace(/\s*\[(\d+(?:\s*,\s*\d+)*)\]/g, (_, nums) => {
+    const valid = nums.split(/\s*,\s*/).filter((n) => +n >= 1 && +n <= nSources);
+    return valid.length ? " " + valid.map((n) => `<span class="cite" data-n="${n}">${n}</span>`).join(" ") : "";
+  });
 }
 
 function renderSources(sources) {
@@ -191,7 +194,7 @@ async function ask(question) {
         if (!line.trim()) continue;
         const ev = JSON.parse(line);
         if (ev.type === "sources") { sources = ev.sources; bubble.textContent = sources.length ? "Нашёл фрагменты, формулирую ответ…" : ""; }
-        else if (ev.type === "token") { answer += ev.text; bubble.classList.remove("thinking"); bubble.innerHTML = renderAnswer(answer); scrollDown(); }
+        else if (ev.type === "token") { answer += ev.text; bubble.classList.remove("thinking"); bubble.innerHTML = renderAnswer(answer, sources.length); scrollDown(); }
         else if (ev.type === "error") throw new Error(ev.error);
       }
     }

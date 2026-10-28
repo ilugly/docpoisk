@@ -47,7 +47,8 @@ CHUNK_SIZE = _int("CHUNK_SIZE", 1000)          # символов в одном 
 CHUNK_OVERLAP = _int("CHUNK_OVERLAP", 200)     # перекрытие соседних чанков
 TOP_K = _int("TOP_K", 6)                       # сколько чанков отдавать LLM
 MIN_SCORE = _float("MIN_SCORE", 0.35)          # порог косинусной близости
-LLM_TEMPERATURE = _float("LLM_TEMPERATURE", 0.1)
+REL_SCORE_GAP = _float("REL_SCORE_GAP", 0.15)  # отсекать фрагменты хуже лучшего больше чем на столько
+LLM_TEMPERATURE = _float("LLM_TEMPERATURE", 0.0)
 LLM_NUM_CTX = _int("LLM_NUM_CTX", 8192)
 
 STORAGE_DIR = os.getenv("STORAGE_DIR", os.path.join(DATA_DIR, "files"))  # копии загруженных файлов

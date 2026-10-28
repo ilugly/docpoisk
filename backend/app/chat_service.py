@@ -19,14 +19,24 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname
 
 app = FastAPI(title="Вопросы по документам")
 
-SYSTEM_PROMPT = """Ты — ассистент, который отвечает на вопросы строго по предоставленным фрагментам документов (договоры, регламенты, судебные материалы и т.п.).
+SYSTEM_PROMPT = """Ты — ассистент, который отвечает на вопросы строго по фрагментам документов (договоры, регламенты, судебные материалы и т.п.).
 
 Правила:
-1. Отвечай ТОЛЬКО на основе фрагментов из раздела «КОНТЕКСТ». Не используй общие знания и не выдумывай.
-2. Если в контексте нет ответа — так и напиши: «В загруженных документах ответа на этот вопрос нет.»
-3. Отвечай по-русски, кратко и точно: сначала прямой ответ, затем при необходимости пояснение.
-4. После каждого утверждения указывай источник в квадратных скобках: [1], [2] — номер фрагмента из контекста.
-5. Сохраняй точные формулировки: названия, суммы, сроки, даты, номера пунктов, наименования судов."""
+1. Используй ТОЛЬКО факты из фрагментов. Не добавляй общих знаний и ничего не выдумывай.
+2. Найди фрагмент, где прямо говорится об ответе, и перескажи его близко к тексту. Числа, проценты, суммы, сроки, даты, ФИО, названия судов и организаций переписывай из фрагмента дословно, не пересчитывай и не меняй.
+3. Начинай сразу с ответа по существу, не повторяй вопрос.
+4. В конце каждого утверждения ставь номер фрагмента, из которого оно взято, например [2].
+5. Если во фрагментах ответа нет — ответь одной фразой: «В загруженных документах ответа на этот вопрос нет.»
+6. Пиши по-русски, кратко."""
+
+USER_TEMPLATE = """Фрагменты документов:
+
+{context}
+
+=====
+Вопрос: {question}
+
+Ответь на вопрос по фрагментам выше. Значения переписывай дословно, после каждого утверждения укажи номер фрагмента в квадратных скобках."""
 
 
 class Ask(BaseModel):
@@ -40,8 +50,18 @@ def _context(hits: list[dict]) -> str:
     blocks = []
     for i, h in enumerate(hits, start=1):
         where = h["filename"] + (f", стр. {h['page']}" if h.get("page") else "")
-        blocks.append(f"[{i}] ({where})\n{h['text']}")
-    return "\n\n---\n\n".join(blocks)
+        blocks.append(f"Фрагмент [{i}] — {where}:\n{h['text']}")
+    return "\n\n".join(blocks)
+
+
+async def _retrieve(question: str, top_k: int | None, doc_ids: list[str] | None) -> list[dict]:
+    [vec] = await ollama.embed([question])
+    hits = await store.search(vec, top_k or config.TOP_K, doc_ids)
+    if hits:
+        # Отбрасываем фрагменты, заметно менее похожие, чем лучший: меньше шума — меньше путаницы у модели
+        best = hits[0]["score"]
+        hits = [h for h in hits if h["score"] >= best - config.REL_SCORE_GAP]
+    return hits
 
 
 def _line(obj: dict) -> bytes:
@@ -56,16 +76,14 @@ async def health():
 @app.post("/search")
 async def search(req: Ask):
     """Только поиск фрагментов, без LLM — удобно для отладки качества поиска."""
-    [vec] = await ollama.embed([req.question])
-    return await store.search(vec, req.top_k or config.TOP_K, req.doc_ids)
+    return await _retrieve(req.question, req.top_k, req.doc_ids)
 
 
 @app.post("/ask")
 async def ask(req: Ask):
     async def gen():
         try:
-            [vec] = await ollama.embed([req.question])
-            hits = await store.search(vec, req.top_k or config.TOP_K, req.doc_ids)
+            hits = await _retrieve(req.question, req.top_k, req.doc_ids)
             yield _line({"type": "sources", "sources": [
                 {"n": i, "filename": h["filename"], "page": h.get("page"), "score": h["score"],
                  "doc_id": h["doc_id"], "text": h["text"]}
