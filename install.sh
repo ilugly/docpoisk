@@ -1,6 +1,6 @@
 #!/bin/bash
 # Установка ДокПоиск на macOS (Apple Silicon или Intel).
-# Запуск:  ./install.sh
+# Запуск:  bash install.sh   (повторный запуск = переустановка с сохранением данных)
 # Нужен интернет только на время установки. Дальше всё работает офлайн.
 set -euo pipefail
 
@@ -75,6 +75,8 @@ done
 
 # ---------- 4. Приложение в ~/Applications (видно в Launchpad и Spotlight) ----------
 say "Создаю приложение ДокПоиск…"
+# Если открыта старая версия — закрываем, иначе она держит базу и новая не запустится
+pkill -f "app.desktop" 2>/dev/null && sleep 1 || true
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cat > "$APP_DIR/Contents/MacOS/DocPoisk" <<EOF
